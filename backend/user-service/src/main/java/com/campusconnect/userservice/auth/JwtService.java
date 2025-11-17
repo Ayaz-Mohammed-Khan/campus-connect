@@ -1,5 +1,6 @@
 package com.campusconnect.userservice.auth;
 
+import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.security.oauth2.core.*;
