@@ -6,6 +6,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/campus_connect
     username: cc_user
     password: dev_password
+    hikari:
+      connection-init-sql: SET TIME ZONE 'UTC';
 
   jpa:
     hibernate:
@@ -13,10 +15,12 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc.time_zone: UTC   # Ensures Hibernate saves timestamps in UTC
 
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
 
 server:
   port: 8081
