@@ -2,17 +2,13 @@ package com.campusconnect.userservice.user;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(
-        name = "users",
-        indexes = {
-                @Index(name = "idx_users_status", columnList = "status")
-        }
-)
+@Table(name = "users", indexes = {
+        @Index(name = "idx_users_status", columnList = "status")
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -44,15 +40,17 @@ public class User {
 
     @PrePersist
     public void onCreate() {
-        email = email.toLowerCase();
+        // timestamps only (safe)
         createdAt = OffsetDateTime.now();
         updatedAt = createdAt;
-        if (status == null) status = "ACTIVE";
+
+        if (status == null) {
+            status = "ACTIVE";
+        }
     }
 
     @PreUpdate
     public void onUpdate() {
         updatedAt = OffsetDateTime.now();
-        email = email.toLowerCase();
     }
 }

@@ -1,0 +1,46 @@
+<configuration>
+
+    <!-- CLEAN APPLICATION LOGS (vertical JSON) -->
+    <appender name="CLEAN_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+            {
+                "ts": "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX}",
+                "lvl": "%level",
+                "trace": "%X{traceId:-}",
+                "logger": "%logger{36}",
+                "msg": "%replace(%msg){'\n','\\n'}"
+}%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- HTTP REQUEST LOGS (vertical JSON) -->
+    <appender name="HTTP_JSON" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                {
+                "ts": "%d{HH:mm:ss.SSS}",
+                "lvl": "%level",
+                "trace": "%X{traceId:-}",
+                "method": "%X{requestMethod:-}",
+                "path": "%X{requestPath:-}",
+                "status": "%X{responseStatus:-}",
+                "ip": "%X{clientIp:-}",
+                "ua": "%X{userAgent:-}",
+                "msg": "%replace(%msg){'\n','\\n'}"
+}%n
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Routing -->
+    <logger name="com.campusconnect.userservice.config.TracingFilter" level="INFO" additivity="false">
+        <appender-ref ref="HTTP_JSON"/>
+    </logger>
+
+    <root level="INFO">
+        <appender-ref ref="CLEAN_JSON"/>
+    </root>
+
+</configuration>
