@@ -1,0 +1,20 @@
+/target/
+**/target/
+.idea/
+.vscode/
+*.iml
+*.class
+*.log
+/.mvn/
+.DS_Store
+
+# Environment files
+.env
+/infra/.env
+
+# Node
+node_modules/
+dist/
+
+# Wrapper files
+.mvn/wrapper/maven-wrapper.jar
