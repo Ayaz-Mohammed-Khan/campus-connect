@@ -11,7 +11,9 @@
 # Environment files
 .env
 /infra/.env
+/infra/.env.example
 /infra/keys/
+
 # Node
 node_modules/
 dist/
