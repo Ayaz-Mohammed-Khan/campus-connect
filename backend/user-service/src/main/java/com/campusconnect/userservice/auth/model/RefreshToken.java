@@ -2,6 +2,7 @@ package com.campusconnect.userservice.auth.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
@@ -16,7 +17,10 @@ import java.util.UUID;
 public class RefreshToken {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "id")
     private UUID id;
+
 
     @Column(name = "user_id", nullable = false)
     private UUID userId;
