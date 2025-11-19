@@ -26,4 +26,11 @@ public class UserController {
         return "OK";
     }
 
+    @GetMapping("/me")
+    public UserResponse currentUser() {
+        return userService.getCurrentUserResponse();
+    }
+
+
+
 }

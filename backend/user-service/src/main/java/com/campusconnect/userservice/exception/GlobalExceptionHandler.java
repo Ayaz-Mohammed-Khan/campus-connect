@@ -213,4 +213,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("Unhandled exception (traceId={}) {}", traceId, ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
     }
+
+    @ExceptionHandler(SecurityException.class)
+    protected ResponseEntity<ApiError> handleSecurity(SecurityException ex, HttpServletRequest req) {
+        String traceId = resolveTraceId(req);
+        ApiError body = ApiError.builder()
+                .code("INVALID_TOKEN")
+                .message("Invalid or reused refresh token")
+                .traceId(traceId)
+                .build();
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
 }
