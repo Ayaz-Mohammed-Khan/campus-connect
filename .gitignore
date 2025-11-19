@@ -11,10 +11,12 @@
 # Environment files
 .env
 /infra/.env
-
+/infra/keys/
 # Node
 node_modules/
 dist/
 
 # Wrapper files
 .mvn/wrapper/maven-wrapper.jar
+
+
