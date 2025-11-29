@@ -5,6 +5,15 @@ import lombok.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+/**
+ * The root entity representing a system user.
+ * <p>
+ * <b>Database Schema:</b>
+ * <ul>
+ * <li><b>Indexes:</b> `idx_users_status` for filtering active users.</li>
+ * <li><b>Locking:</b> Supports optimistic locking via versioning (implied) or pessimistic locking via repository.</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "users", indexes = {
         @Index(name = "idx_users_status", columnList = "status")
@@ -40,6 +49,7 @@ public class User {
     private OffsetDateTime updatedAt;
 
     // 🚀 PHASE 1 SECURITY: Lockout Fields
+    // Used by UserAuthService to track brute-force attempts
     @Column(name = "failed_attempts", nullable = false)
     @Builder.Default
     private int failedAttempts = 0;
@@ -60,7 +70,10 @@ public class User {
         updatedAt = OffsetDateTime.now();
     }
 
-    // Helper to check lock status
+    /**
+     * Checks if the user is currently locked out due to excessive failed login attempts.
+     * @return true if the lockout period is still active.
+     */
     public boolean isLocked() {
         return lockoutEnd != null && lockoutEnd.isAfter(OffsetDateTime.now());
     }

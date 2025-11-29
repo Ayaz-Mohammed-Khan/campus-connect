@@ -22,6 +22,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * API Rate Limiting Filter using Token Bucket Algorithm.
+ * <p>
+ * Protects critical endpoints (Auth, User Registration) from abuse and brute-force attacks.
+ * Uses an in-memory `ConcurrentHashMap` to track buckets per IP address.
+ */
 @Slf4j
 @Component
 public class RateLimitingFilter extends OncePerRequestFilter {
@@ -31,7 +37,9 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
     @PostConstruct
     public void init() {
-        // 🛠️ MEMORY LEAK FIX: Clear cache every hour
+        // 🛠️ MEMORY LEAK PROTECTION:
+        // Since we store buckets in-memory, we must periodically clear inactive IPs.
+        // In a production environment, this should be replaced by Redis (e.g., Redisson).
         scheduler.scheduleAtFixedRate(() -> {
             log.debug("Maintenance: Clearing Rate Limit Cache (Size: {})", cache.size());
             cache.clear();
@@ -50,26 +58,37 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
 
+        // Apply limits only to high-risk paths
         if (isRateLimitedPath(path)) {
             String ip = getClientIp(request);
             Bucket bucket = cache.computeIfAbsent(ip, this::createNewBucket);
 
+            // Try to consume 1 token. If false, bucket is empty -> 429 Error.
             if (!bucket.tryConsume(1)) {
                 response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
                 response.getWriter().write("Too many requests. Please try again later.");
-                return;
+                return; // Stop the filter chain here
             }
         }
 
         filterChain.doFilter(request, response);
     }
 
+    /**
+     * Defines which paths require protection.
+     * Currently targeting Authentication and Registration endpoints.
+     */
     private boolean isRateLimitedPath(String path) {
         return path.startsWith("/auth/") || path.startsWith("/api/v1/users");
     }
 
+    /**
+     * Configures the Token Bucket rules.
+     * <p>
+     * <b>Rule:</b> 10 requests per minute per IP.
+     * This is strict enough to stop brute-force but generous enough for normal human use.
+     */
     private Bucket createNewBucket(String key) {
-        // 10 requests per minute per IP
         Bandwidth limit = Bandwidth.classic(10, Refill.greedy(10, Duration.ofMinutes(1)));
         return Bucket.builder().addLimit(limit).build();
     }

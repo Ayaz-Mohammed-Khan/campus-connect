@@ -9,6 +9,17 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Spring Security Configuration for a Stateless Resource Server.
+ * <p>
+ * Configures the {@link SecurityFilterChain} to:
+ * <ul>
+ * <li>Disable CSRF (not needed for stateless APIs).</li>
+ * <li>Enforce {@link SessionCreationPolicy#STATELESS}.</li>
+ * <li>Configure public vs. protected endpoints.</li>
+ * <li>Integrate OAuth2 Resource Server for JWT validation.</li>
+ * </ul>
+ */
 @Configuration
 @RequiredArgsConstructor
 public class SecurityConfig {
@@ -18,6 +29,20 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Defines the HTTP security filter chain.
+     * <p>
+     * <b>Public Endpoints:</b>
+     * <ul>
+     * <li>Actuator Health/Info</li>
+     * <li>Auth routes ({@code /auth/**})</li>
+     * <li>User Registration (POST {@code /api/v1/users})</li>
+     * </ul>
+     *
+     * @param http The HttpSecurity builder.
+     * @return The built filter chain.
+     * @throws Exception if configuration fails.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

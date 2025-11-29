@@ -20,6 +20,15 @@ import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Optional;
 
+/**
+ * Manages the lifecycle of stateful Refresh Tokens.
+ * <p>
+ * Implements "Refresh Token Rotation" with "Family Reuse Detection".
+ * Instead of storing raw tokens, this service stores a SHA-256 hash of the token.
+ * The token format is: {@code [12-char-prefix].[32-byte-random-string]}.
+ * The prefix allows for efficient database lookups, while the hash ensures
+ * the raw token cannot be leaked via database dumps.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -35,8 +44,6 @@ public class RefreshTokenService {
 
     private static final SecureRandom RNG = new SecureRandom();
     private static final int PREFIX_LENGTH = 12;
-
-
 
     private String generateRawToken() {
         byte[] a = new byte[48];
@@ -55,6 +62,9 @@ public class RefreshTokenService {
         return clean.substring(0, PREFIX_LENGTH);
     }
 
+    /**
+     * Generates a secure random token, hashes it, and persists it.
+     */
     @Transactional
     public String createRefreshToken(User user, String ip, String ua) {
         String raw = generateRawToken();
@@ -80,6 +90,7 @@ public class RefreshTokenService {
                 .filter(t -> {
                     String stored = t.getTokenHash();
                     if (stored == null) return false;
+                    // Backward compatibility for old BCrypt tokens (development only)
                     if (stored.startsWith("$2a$") || stored.startsWith("$2b$")) {
                         return passwordEncoder.matches(raw, stored);
                     }
@@ -87,12 +98,25 @@ public class RefreshTokenService {
                 });
     }
 
-    // 🚀 CRITICAL FIX: Added noRollbackFor here too!
-    // This prevents this inner service from marking the transaction as "Rollback-Only"
-    // when the exception is thrown.
+    /**
+     * Atomically rotates a refresh token.
+     * <p>
+     * <b>Replay Attack Detection:</b>
+     * Tries to update the {@code lastUsedAt} timestamp of the provided token.
+     * If {@code rowsUpdated == 0}, it implies the token was already used (Atomic Check).
+     * In this scenario, the method triggers a {@link TokenReuseEvent} and revokes
+     * <b>ALL</b> sessions for the user.
+     *
+     * @param staleToken The database entity of the token being exchanged.
+     * @param ip         The IP address of the requester.
+     * @param ua         The User-Agent of the requester.
+     * @return A new raw refresh token string.
+     * @throws TokenReuseException if the DB update fails, indicating the token was already used.
+     */
     @Transactional(noRollbackFor = TokenReuseException.class)
     public String rotate(RefreshToken staleToken, String ip, String ua) {
-        // 1. Atomic DB Check
+        // Atomic Swap: Only succeeds if lastUsedAt was null.
+        // Returns 0 if another thread/request used it first (Replay Attack).
         int rowsUpdated = repo.updateLastUsedAt(staleToken.getId(), OffsetDateTime.now(ZoneOffset.UTC));
 
         if (rowsUpdated == 0) {

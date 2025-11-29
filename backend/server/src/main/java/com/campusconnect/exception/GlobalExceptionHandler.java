@@ -21,10 +21,21 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Centralized Exception Handler for the entire API.
+ * <p>
+ * Converts application-specific exceptions into standard {@link ProblemDetail} responses (RFC 7807).
+ * Also handles MDC context enrichment for observability.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // Helper: Add traceId and timestamp to every error response
+    /**
+     * Enriches the ProblemDetail with observability metadata (Trace ID, Timestamp).
+     * <p>
+     * <b>Why:</b> This ensures that every error response includes the `traceId`
+     * required to look up the corresponding logs in the backend.
+     */
     private ProblemDetail enrich(ProblemDetail problem, WebRequest request) {
         problem.setProperty("timestamp", Instant.now());
         String traceId = request.getHeader("X-Trace-Id");
@@ -32,6 +43,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             problem.setProperty("traceId", traceId);
         }
 
+        // Whisper the details to the logging framework (MDC) so the final log
+        // includes the specific failure reason without exposing it in the HTTP response body if needed.
         if (problem.getDetail() != null) {
             MDC.put("errorDetail", problem.getDetail());
         }
@@ -52,16 +65,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(status).body(enrich(problem, request));
     }
 
-    // 🚀 NEW: Handle Account Lockout
+    // Handle Account Lockout explicitly
     @ExceptionHandler(LockedException.class)
     public ResponseEntity<ProblemDetail> handleLocked(LockedException ex, WebRequest request) {
-        // Using 429 Too Many Requests as it semantically fits "try again later"
+        // Maps to 429 Too Many Requests as it semantically fits "try again later"
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
         problem.setTitle("Account Locked");
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(enrich(problem, request));
     }
 
-    // 🚀 NEW: Handle Bad Credentials explicitly (401)
+    // Handle Bad Credentials explicitly (401)
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ProblemDetail> handleBadCredentials(BadCredentialsException ex, WebRequest request) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid email or password");
@@ -114,16 +127,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(enrich(problem, request));
     }
 
-    // 🚀 NEW: Explicit handler for our "No-Rollback" Exception
+    // Explicit handler for our "No-Rollback" Exception
     @ExceptionHandler(TokenReuseException.class)
     public ResponseEntity<ProblemDetail> handleTokenReuse(TokenReuseException ex, WebRequest request) {
         // Return 401 Unauthorized
+        // We mask the internal "Reuse Detected" event as a generic 401 to the user
+        // to prevent information leakage, while the backend takes strict action.
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
         problem.setTitle("Security Error");
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(enrich(problem, request));
     }
 
-    // 🚀 NEW: Specific Handler for Expired Tokens
+    // Specific Handler for Expired Tokens
     @ExceptionHandler(CredentialsExpiredException.class)
     public ResponseEntity<ProblemDetail> handleCredentialsExpired(CredentialsExpiredException ex, WebRequest request) {
         // We trust the message here because we threw it explicitly in UserAuthService
@@ -132,7 +147,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(enrich(problem, request));
     }
 
-    // 🚀 NEW: Handler for Generic Security Exceptions (e.g. "Invalid refresh token")
+    // Handler for Generic Security Exceptions (e.g. "Invalid refresh token")
     @ExceptionHandler(SecurityException.class)
     public ResponseEntity<ProblemDetail> handleSecurityException(SecurityException ex, WebRequest request) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, ex.getMessage());
