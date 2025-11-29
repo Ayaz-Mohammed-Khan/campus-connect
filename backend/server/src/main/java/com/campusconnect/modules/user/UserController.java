@@ -1,8 +1,7 @@
-package com.campusconnect.userservice.web;
+package com.campusconnect.modules.user;
 
-import com.campusconnect.userservice.user.UserService;
-import com.campusconnect.userservice.user.dto.CreateUserRequest;
-import com.campusconnect.userservice.user.dto.UserResponse;
+import com.campusconnect.modules.user.dto.CreateUserRequest;
+import com.campusconnect.modules.user.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
