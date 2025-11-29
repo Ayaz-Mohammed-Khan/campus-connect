@@ -5,7 +5,6 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- Parent: root multi-module aggregator -->
     <parent>
         <groupId>com.campusconnect</groupId>
         <artifactId>campus-connect</artifactId>
@@ -19,7 +18,7 @@
     <description>Backend multi-module parent for Campus Connect</description>
 
     <modules>
-        <module>user-service</module>
+        <module>server</module>
     </modules>
 
     <properties>
@@ -28,14 +27,12 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Inherit Spring Boot BOM from root -->
         </dependencies>
     </dependencyManagement>
 
     <build>
         <pluginManagement>
             <plugins>
-                <!-- Inherit plugins from root parent -->
             </plugins>
         </pluginManagement>
     </build>

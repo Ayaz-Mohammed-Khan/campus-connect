@@ -35,7 +35,7 @@
     </appender>
 
     <!-- Routing -->
-    <logger name="com.campusconnect.userservice.config.TracingFilter" level="INFO" additivity="false">
+    <logger name="com.campusconnect.config.TracingFilter" level="INFO" additivity="false">
         <appender-ref ref="HTTP_JSON"/>
     </logger>
 
