@@ -1,8 +1,8 @@
-package com.campusconnect.userservice.config;
+package com.campusconnect.config;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.*;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -24,16 +24,22 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        // 1. Static & Health (Public)
                         .requestMatchers(
-                                "/auth/**",
-                                "/api/v1/users/health",
-                                "/api/v1/users/**",
                                 "/actuator/health",
-                                "/actuator/info"
+                                "/actuator/info",
+                                "/api/v1/users/health"
                         ).permitAll()
+
+                        // 2. Auth Endpoints (Public)
+                        .requestMatchers("/auth/**").permitAll()
+
+                        // 3. User Registration (POST Public / GET Secured)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/users").permitAll()
+
+                        // 4. Default: Everything else requires Authentication
                         .anyRequest().authenticated()
                 )
-
                 .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()));
 
         return http.build();

@@ -1,4 +1,4 @@
-package com.campusconnect.userservice.exception;
+package com.campusconnect.exception;
 
 public class DuplicateResourceException extends RuntimeException {
     private final String resource;

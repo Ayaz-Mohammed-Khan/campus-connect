@@ -1,4 +1,4 @@
-package com.campusconnect.userservice.web;
+package com.campusconnect.exception;
 
 
 import lombok.Builder;
