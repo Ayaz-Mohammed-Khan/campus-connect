@@ -17,6 +17,15 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Instant;
 import java.util.List;
 
+/**
+ * Service for handling JSON Web Token (JWT) operations using Asymmetric Encryption (RS256).
+ * <p>
+ * This service loads RSA keys (Private/Public) from the file system or environment variables
+ * upon initialization. It configures the {@link NimbusJwtEncoder} for signing tokens and
+ * exposes a {@link JwtDecoder} bean for Spring Security's Resource Server.
+ *
+ * @see com.campusconnect.modules.auth.utils.PemKeyLoader
+ */
 @Slf4j
 @Service
 public class JwtService {
@@ -54,7 +63,7 @@ public class JwtService {
     }
 
     /**
-     * 🔥 REQUIRED for Spring Security — exposes our decoder to the
+     * REQUIRED for Spring Security — exposes our decoder to the
      * Resource Server so .jwt() authentication works.
      */
     @Bean
@@ -62,6 +71,21 @@ public class JwtService {
         return this.decoder;
     }
 
+    /**
+     * Generates a short-lived JWT Access Token.
+     * <p>
+     * Claims included:
+     * <ul>
+     * <li>{@code sub}: The User UUID.</li>
+     * <li>{@code email}: The User email.</li>
+     * <li>{@code roles}: List of assigned user roles.</li>
+     * </ul>
+     *
+     * @param userId The unique identifier of the user.
+     * @param email  The user's email address.
+     * @param roles  The roles assigned to the user.
+     * @return A signed JWT string.
+     */
     public String generateAccessToken(java.util.UUID userId, String email, List<String> roles) {
         Instant now = Instant.now();
 

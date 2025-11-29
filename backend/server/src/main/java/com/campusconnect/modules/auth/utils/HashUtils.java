@@ -12,7 +12,7 @@ public final class HashUtils {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
             byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            // 🚀 JAVA 17+: Native Hex Formatting
+            // JAVA 17+: Native Hex Formatting
             return HexFormat.of().formatHex(digest);
         } catch (Exception e) {
             throw new RuntimeException("Failed to compute sha256", e);
