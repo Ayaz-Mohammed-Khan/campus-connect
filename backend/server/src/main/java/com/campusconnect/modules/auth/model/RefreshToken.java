@@ -1,5 +1,6 @@
-package com.campusconnect.userservice.auth.model;
+package com.campusconnect.modules.auth.model;
 
+import com.campusconnect.modules.user.model.User;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,9 +22,10 @@ public class RefreshToken {
     @Column(name = "id")
     private UUID id;
 
-
-    @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    // 🚀 OPTIMIZATION: Mapped relationship for single-query fetch
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @Column(name = "token_prefix", nullable = false, length = 12)
     private String tokenPrefix;
@@ -54,5 +56,10 @@ public class RefreshToken {
         if (createdAt == null) {
             createdAt = OffsetDateTime.now(ZoneOffset.UTC);
         }
+    }
+
+    // Helper for backward compatibility / convenience
+    public UUID getUserId() {
+        return user != null ? user.getId() : null;
     }
 }

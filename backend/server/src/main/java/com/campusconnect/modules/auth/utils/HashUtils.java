@@ -1,7 +1,8 @@
-package com.campusconnect.userservice.auth;
+package com.campusconnect.modules.auth.utils;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.util.HexFormat;
 
 public final class HashUtils {
 
@@ -10,13 +11,9 @@ public final class HashUtils {
     public static String sha256Hex(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] dig = md.digest(input.getBytes(StandardCharsets.UTF_8));
-            // convert to hex
-            StringBuilder sb = new StringBuilder(dig.length * 2);
-            for (byte b : dig) {
-                sb.append(String.format("%02x", b & 0xff));
-            }
-            return sb.toString();
+            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
+            // 🚀 JAVA 17+: Native Hex Formatting
+            return HexFormat.of().formatHex(digest);
         } catch (Exception e) {
             throw new RuntimeException("Failed to compute sha256", e);
         }
